@@ -1,0 +1,12 @@
+<h1>The Jobs EJS Application</h1>
+
+<%# check the info and errors arrays, displaying values from them if any are present %>
+
+<% if (errors && errors.length > 0) {
+  errors.forEach((err) => { %>
+    <div style="color: red;">Error: <%= err %></div>
+<% }) } %>
+<% if (info && info.length > 0) {
+  info.forEach((msg) => { %>
+    <div style="color: green;">Info: <%= msg %></div>
+<% }) } %>
