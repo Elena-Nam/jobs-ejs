@@ -45,27 +45,28 @@ app.use(session(sessionParms));
 // Create the flash middleware
 app.use(require("connect-flash")()); // The second parentheses immediately call that function
 
-// secret word handling
-app.get("/secretWord", (req, res) => {
-  if (!req.session.secretWord) {
-    req.session.secretWord = "syzygy";
-  }
-  res.locals.info = req.flash("info");
-  res.locals.errors = req.flash("error");
-  res.render("secretWord", { secretWord: req.session.secretWord });
-});
+// Tell Passport to authenticate users and retrieve them from the database
+const passport = require("passport");
+const passportInit = require("./passport/passportInit");
+passportInit();
 
-// set some messages into flash
-app.post("/secretWord", (req, res) => {
-  if (req.body.secretWord.toUpperCase()[0] == "P") {
-    req.flash("error", "That word won't work!");
-    req.flash("error", "You can't use words that start with P.");
-  } else {
-    req.session.secretWord = req.body.secretWord;
-    req.flash("info", "The secret word was changed.");
-  }
-  res.redirect("/secretWord");
+// Sets up Passport to work with Express and sessions
+app.use(passport.initialize());
+// Express middleware that runs on ALL REQUESTS, checks the session cookie for a user id, and if it finds one, deserializes and attaches it to the req.user property
+app.use(passport.session());
+
+app.use(require("./middleware/storeLocals"));
+// Render the index.ejs templ
+app.get("/", (req, res) => {
+  res.render("index");
 });
+app.use("/sessions", require("./routes/sessionRoutes"));
+
+// secret word handling
+const secretWordRouter = require("./routes/secretWord");
+// the authentication middleware runs before the secretWordRouter, and it redirects if any requests are made for those routes before logon
+const auth = require("./middleware/auth");
+app.use("/secretWord", auth, secretWordRouter);
 
 app.use((req, res) => {
   res.status(404).send(`That page (${req.url}) was not found.`);
@@ -80,6 +81,7 @@ const port = process.env.PORT || 3000;
 
 const start = async () => {
   try {
+    await require("./db/connect")(process.env.MONGO_URL);
     app.listen(port, () =>
       console.log(`Server is listening on port ${port}...`)
     );
