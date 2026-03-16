@@ -1,29 +1,35 @@
-<%# The register collects the name, email, and password for a new %>
-
 <%- include("partials/head.ejs") %>
 <%- include("partials/header.ejs") %>
-<form method="POST">
+
+<form method="POST" action="/sessions/register">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
   <div>
-    <label name="name">Enter your name:</label>
-    <input name="name" />
+    <label>Name:</label>
+    <input name="name" type="text" required />
   </div>
+
   <div>
-    <label name="email">Enter your email:</label>
-    <input name="email" />
+    <label>Email:</label>
+    <input name="email" type="email" required />
   </div>
+
   <div>
-    <label name="password">Enter your password:</label>
-    <input type="password" name="password" />
+    <label>Password:</label>
+    <input type="password" name="password" required />
   </div>
+
   <div>
-    <label name="password1">Confirm your password:</label>
-    <input type="password" name="password1" />
+    <label>Confirm Password:</label>
+    <input type="password" name="password1" required />
   </div>
+
   <div>
-    <button>Register</button>
+    <button type="submit">Register</button>
     <a href="/">
       <button type="button">Cancel</button>
     </a>
   </div>
 </form>
+
 <%- include("partials/footer.ejs") %>
