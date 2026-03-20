@@ -1,4 +1,8 @@
 require("dotenv").config(); // Load .env variables first
+let mongoURL = process.env.MONGO_URL;
+if (process.env.NODE_ENV == "test") {
+  mongoURL = process.env.MONGO_URL_TEST;
+}
 
 const express = require("express");
 require("express-async-errors");
@@ -32,7 +36,8 @@ app.use(cookieParser(process.env.SESSION_SECRET));
 
 // ===== SESSION STORE =====
 const store = new MongoDBStore({
-  uri: process.env.MONGO_URL,
+  // uri: process.env.MONGO_URL,
+  uri: mongoURL,
   collection: "mySessions",
 });
 
@@ -86,6 +91,19 @@ app.use(require("./middleware/storeLocals"));
 // ===== VIEW ENGINE =====
 app.set("view engine", "ejs");
 
+/* last week */
+app.use((req, res, next) => {
+  if (req.path == "/multiply") {
+    res.set("Content-Type", "application/json");
+  } else {
+    res.set("Content-Type", "text/html");
+  }
+  next();
+});
+
+//
+
+
 // ===== ROUTES =====
 app.get("/", (req, res) => res.render("index"));
 app.use("/sessions", require("./routes/sessionRoutes"));
@@ -101,6 +119,36 @@ app.use("/jobs", auth, require("./routes/jobs"));
 app.post("/sessions/logoff", (req, res) => {
   req.session.destroy(() => res.redirect("/"));
 });
+
+
+/* last week changes */
+// app.get("/multiply", (req, res) => {
+//   const result = req.query.first * req.query.second;
+//   if (result.isNaN) {
+//     result = "NaN";
+//   } else if (result == null) {
+//     result = "null";
+//   }
+//   res.json({ result: result });
+// });
+
+
+app.get("/multiply", (req, res) => {
+  let result = req.query.first * req.query.second;
+
+  if (isNaN(result)) {
+    result = "NaN";
+  } else if (result == null) {
+    result = "null";
+  }
+
+  res.json({ result: result });
+});
+//
+
+
+
+
 
 // ===== ERROR HANDLING =====
 app.use((req, res) => res.status(404).send(`Page ${req.url} not found`));
@@ -118,7 +166,8 @@ app.use((err, req, res, next) => {
 const port = process.env.PORT || 3000;
 const start = async () => {
   try {
-    await require("./db/connect")(process.env.MONGO_URL);
+    // await require("./db/connect")(process.env.MONGO_URL);
+    await require("./db/connect")(mongoURL);
     app.listen(port, () => console.log(`Server listening on port ${port}...`));
   } catch (err) {
     console.log(err);
@@ -126,3 +175,5 @@ const start = async () => {
 };
 
 start();
+
+module.exports = { app };
